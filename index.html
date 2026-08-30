@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sentry.ai — Describe it. We'll structure it.</title>
-<meta name="description" content="Sentry.ai is an AI-powered project development assistant that turns your idea into a complete, structured project through conversation.">
+<title>Sentry.ai — AI Early Warning for Landslides, North Eastern Region</title>
+<meta name="description" content="Sentry.ai predicts landslides and flash floods across the North Eastern Region in real time, and alerts district administrations, field officials and villages before roads fail.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -20,6 +20,8 @@
     --accent-amber-dim:rgba(242,169,59,0.14);
     --accent-blue:#4C8BF5;
     --accent-blue-dim:rgba(76,139,245,0.14);
+    --accent-green:#5FAE7A;
+    --accent-green-dim:rgba(95,174,122,0.14);
     --radius:14px;
     --maxw:1120px;
   }
@@ -125,6 +127,12 @@
   }
   .btn-ghost:hover{border-color:var(--accent-blue);background:var(--accent-blue-dim);}
 
+  .hero-meta{
+    margin-top:30px;display:flex;gap:24px;flex-wrap:wrap;
+    font-family:'JetBrains Mono',monospace;font-size:0.76rem;color:var(--text-muted);
+  }
+  .hero-meta strong{color:var(--text);font-weight:600;}
+
   /* ---------- HERO DEMO (signature element) ---------- */
   .demo-panel{
     background:var(--bg-panel);
@@ -135,8 +143,14 @@
     position:relative;
     overflow:hidden;
   }
-  .demo-dots{display:flex;gap:6px;margin-bottom:18px;}
+  .demo-dots{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .demo-dots-l{display:flex;gap:6px;}
   .demo-dots span{width:9px;height:9px;border-radius:50%;background:var(--border);}
+  .demo-live{
+    display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;
+    font-size:0.68rem;color:var(--accent-amber);letter-spacing:0.05em;text-transform:uppercase;
+  }
+  .demo-live .ldot{width:6px;height:6px;border-radius:50%;background:var(--accent-amber);animation:pulse 1.6s infinite ease-in-out;}
 
   .chat-bubble{
     background:var(--bg-panel-2);
@@ -144,7 +158,7 @@
     border-radius:12px 12px 12px 3px;
     padding:14px 16px;
     font-size:0.92rem;
-    max-width:92%;
+    max-width:96%;
     margin-bottom:16px;
     min-height:1.6em;
   }
@@ -182,6 +196,8 @@
     font-family:'JetBrains Mono',monospace;font-size:0.66rem;letter-spacing:0.06em;
     color:var(--accent-blue);text-transform:uppercase;margin-bottom:5px;display:block;
   }
+  .block .btag.warn{color:var(--accent-amber);}
+  .block .btag.safe{color:var(--accent-green);}
   .block .btitle{font-size:0.85rem;font-weight:600;}
 
   @media (prefers-reduced-motion: reduce){
@@ -228,9 +244,6 @@
   }
   .step h3{font-size:1.1rem;margin-bottom:10px;}
   .step p{color:var(--text-muted);font-size:0.94rem;}
-  .step-connector{
-    display:none;
-  }
   @media (min-width:821px){
     .step:not(:last-child)::after{
       content:'';position:absolute;top:22px;right:-2px;width:24px;height:1px;
@@ -252,18 +265,42 @@
   .feature-icon{
     width:36px;height:36px;border-radius:9px;background:var(--accent-blue-dim);
     display:flex;align-items:center;justify-content:center;margin-bottom:16px;
-    color:var(--accent-blue);
+    color:var(--accent-blue);font-size:1.1rem;
   }
   .feature-card h3{font-size:1.02rem;margin-bottom:8px;}
   .feature-card p{color:var(--text-muted);font-size:0.9rem;}
 
+  /* Dashboard stat cards — reuses feature-card language with data + status */
+  .stat-grid{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:20px;
+  }
+  @media (max-width:920px){.stat-grid{grid-template-columns:repeat(2,1fr);}}
+  @media (max-width:600px){.stat-grid{grid-template-columns:1fr;}}
+  .stat-card{
+    background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius);
+    padding:22px;
+  }
+  .stat-card .sk{
+    font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--text-muted);
+    text-transform:uppercase;letter-spacing:0.06em;
+  }
+  .stat-card .sv{font-family:'Space Grotesk',sans-serif;font-size:1.7rem;font-weight:700;margin:10px 0 8px;}
+  .status-pill{
+    font-family:'JetBrains Mono',monospace;font-size:0.7rem;
+    padding:4px 10px;border-radius:12px;display:inline-block;
+  }
+  .status-pill.danger{color:#E8825A;background:rgba(232,130,90,0.14);}
+  .status-pill.warn{color:var(--accent-amber);background:var(--accent-amber-dim);}
+  .status-pill.safe{color:var(--accent-green);background:var(--accent-green-dim);}
+  .dash-note{color:var(--text-muted);font-size:0.85rem;margin-top:18px;font-family:'JetBrains Mono',monospace;}
+
   /* Tech stack — abstract layers */
   .stack{
-    display:flex;flex-direction:column;gap:12px;max-width:560px;
+    display:flex;flex-direction:column;gap:12px;max-width:600px;
   }
   .stack-layer{
     background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;
-    padding:16px 20px;display:flex;align-items:center;justify-content:space-between;
+    padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px;
   }
   .stack-layer .lname{font-weight:600;font-size:0.96rem;}
   .stack-layer .ldesc{color:var(--text-muted);font-size:0.85rem;}
@@ -328,6 +365,7 @@
       <a href="#solution">Solution</a>
       <a href="#how">How it works</a>
       <a href="#features">Features</a>
+      <a href="#dashboard">Dashboard</a>
       <a href="#waitlist">Coming soon</a>
     </div>
     <button class="nav-cta" onclick="document.getElementById('waitlist').scrollIntoView({behavior:'smooth'})">Join waitlist</button>
@@ -337,26 +375,34 @@
 <section class="hero" style="border-top:none;padding-top:64px;">
   <div class="wrap hero-grid">
     <div>
-      <span class="eyebrow"><span class="logo-dot" style="width:6px;height:6px;"></span>SIH Solution</span>
-      <h1>Describe your idea.<br>Get a <span class="accent">complete project.</span></h1>
-      <p class="lede">Sentry.ai is a conversational assistant that turns a raw idea or problem statement into a structured project — concept, solution approach, features, workflow, technical architecture, and implementation plan — through natural conversation.</p>
+      <span class="eyebrow"><span class="logo-dot" style="width:6px;height:6px;"></span>SIH Solution · Disaster Management</span>
+      <h1>Know a slope is failing <span class="accent">before the road does.</span></h1>
+      <p class="lede">Sentry.ai reads rainfall, soil moisture, satellite imagery and terrain data across the North Eastern Region in real time, predicts where landslides are likely, and alerts district administrations, field officials and villages while there's still time to act.</p>
       <div class="hero-ctas">
         <button class="btn-primary" onclick="document.getElementById('waitlist').scrollIntoView({behavior:'smooth'})">Join the waitlist</button>
         <button class="btn-ghost" onclick="document.getElementById('how').scrollIntoView({behavior:'smooth'})">See how it works</button>
       </div>
+      <div class="hero-meta">
+        <span><strong>Coverage —</strong> NER hill districts</span>
+        <span><strong>Alerts —</strong> SMS · app · GIS dashboard</span>
+        <span><strong>Status —</strong> in development for SIH</span>
+      </div>
     </div>
 
     <div class="demo-panel" id="demoPanel">
-      <div class="demo-dots"><span></span><span></span><span></span></div>
+      <div class="demo-dots">
+        <div class="demo-dots-l"><span></span><span></span><span></span></div>
+        <div class="demo-live"><span class="ldot"></span>SECTOR 07 · LIVE</div>
+      </div>
       <div class="chat-bubble"><span id="typedText"></span><span class="cursor"></span></div>
-      <div class="thinking" id="thinkingIndicator"><span class="tdot"></span><span class="tdot"></span><span class="tdot"></span><span class="mono">structuring your project</span></div>
+      <div class="thinking" id="thinkingIndicator"><span class="tdot"></span><span class="tdot"></span><span class="tdot"></span><span class="mono">assessing risk</span></div>
       <div class="blocks" id="blocksGrid">
-        <div class="block"><span class="btag">Concept</span><span class="btitle">Crop disease early-warning</span></div>
-        <div class="block"><span class="btag">Solution</span><span class="btitle">Image-based AI detection</span></div>
-        <div class="block"><span class="btag">Features</span><span class="btitle">Alerts, offline mode, chat</span></div>
-        <div class="block"><span class="btag">Workflow</span><span class="btitle">Capture → Analyze → Alert</span></div>
-        <div class="block"><span class="btag">Architecture</span><span class="btitle">Mobile + inference layer</span></div>
-        <div class="block"><span class="btag">Plan</span><span class="btitle">4-week build roadmap</span></div>
+        <div class="block"><span class="btag warn">Risk severity</span><span class="btitle">High — Sector 07</span></div>
+        <div class="block"><span class="btag">Rainfall / 24h</span><span class="btitle">86 mm, rising</span></div>
+        <div class="block"><span class="btag warn">Soil moisture</span><span class="btitle">91% saturation</span></div>
+        <div class="block"><span class="btag safe">Road NH-306</span><span class="btitle">Open, monitored</span></div>
+        <div class="block"><span class="btag">72h forecast</span><span class="btitle">+64 mm expected</span></div>
+        <div class="block"><span class="btag warn">Alert dispatched</span><span class="btitle">District EOC notified</span></div>
       </div>
     </div>
   </div>
@@ -366,18 +412,19 @@
   <div class="wrap">
     <div class="section-head">
       <span class="section-eyebrow">The problem</span>
-      <h2>Turning an idea into a real project is harder than it should be</h2>
+      <h2>Monitoring is still reactive, in a region that can't afford to be</h2>
+      <p>Heavy rainfall, fragile terrain and unplanned hill cutting make the North Eastern Region especially prone to landslides, flash floods and slope failures.</p>
     </div>
     <div class="split">
       <div class="split-card reveal">
         <span class="tag tag-problem">Today</span>
-        <h3>Good ideas stall at the blank page</h3>
-        <p>Most project-building tools start with forms, templates, or tools that ask you to already know your architecture, your feature list, your plan — before you've even finished shaping the idea. For anyone building fast, especially under a hackathon clock, that's backwards.</p>
+        <h3>Risk is only checked after it happens</h3>
+        <p>Vulnerable zones are inspected after reports come in, not watched continuously. Field information travels by phone call and word of mouth, with no shared record — so a blocked road can isolate a village for days before help arrives.</p>
       </div>
       <div class="split-card reveal">
         <span class="tag tag-solution">With Sentry.ai</span>
-        <h3>Start with a sentence, not a spec</h3>
-        <p>You describe the problem or idea the way you'd explain it to a teammate. Sentry.ai asks the clarifying questions a good collaborator would, then assembles the structured project around your answers — concept, solution, features, workflow, architecture, and plan.</p>
+        <h3>A live model of every slope</h3>
+        <p>Rainfall, soil moisture, satellite imagery and terrain data feed a model that's always running. Authorities see risk shift in real time, instead of finding out once a slope has already given way.</p>
       </div>
     </div>
   </div>
@@ -387,8 +434,8 @@
   <div class="wrap">
     <div class="section-head">
       <span class="section-eyebrow">The solution</span>
-      <h2>One conversation. A complete project.</h2>
-      <p>No dashboards to configure and no templates to fill in. You talk, Sentry.ai listens, asks what it needs to know, and builds the structure around what you actually meant.</p>
+      <h2>One system. Every vulnerable slope.</h2>
+      <p>No manual inspection rounds and no waiting for a phone call. Sentry.ai watches continuously, scores risk as conditions change, and gets the result to the people who need to act on it — before the next heavy spell of rain.</p>
     </div>
   </div>
 </section>
@@ -397,23 +444,23 @@
   <div class="wrap">
     <div class="section-head">
       <span class="section-eyebrow">How it works</span>
-      <h2>Three steps, start to finish</h2>
+      <h2>Three stages, running continuously</h2>
     </div>
     <div class="steps">
       <div class="step reveal">
         <div class="step-num mono">01</div>
-        <h3>Describe your idea</h3>
-        <p>Type your problem statement or idea in plain language — as detailed or as rough as you have it.</p>
+        <h3>Collect signals</h3>
+        <p>Rainfall patterns, soil moisture sensors, satellite imagery, terrain/slope data and historical landslide records feed in continuously, sector by sector.</p>
       </div>
       <div class="step reveal">
         <div class="step-num mono">02</div>
-        <h3>Answer a few questions</h3>
-        <p>Sentry.ai asks only what it needs to fill the gaps — scope, users, constraints — nothing you already said.</p>
+        <h3>Score risk</h3>
+        <p>AI/ML models trained on regional terrain and weather patterns identify high-risk zones and predict the likelihood of a landslide event.</p>
       </div>
       <div class="step reveal">
         <div class="step-num mono">03</div>
-        <h3>Get your structured project</h3>
-        <p>Receive the concept, solution approach, features, workflow, architecture, and implementation plan — ready to build from.</p>
+        <h3>Alert &amp; respond</h3>
+        <p>Real-time alerts reach district administrations, disaster management authorities and local communities, prioritised by severity.</p>
       </div>
     </div>
   </div>
@@ -423,40 +470,73 @@
   <div class="wrap">
     <div class="section-head">
       <span class="section-eyebrow">Key features</span>
-      <h2>Built around the conversation, not around a form</h2>
+      <h2>Built around what actually happens on a hillside</h2>
     </div>
     <div class="features-grid">
       <div class="feature-card reveal">
-        <div class="feature-icon">💬</div>
-        <h3>Natural language input</h3>
-        <p>Describe your project the way you'd say it out loud — no rigid fields or required formats.</p>
+        <div class="feature-icon">🌧️</div>
+        <h3>Five data sources, one picture</h3>
+        <p>Rainfall patterns, soil moisture sensors, satellite imagery, terrain/slope data and historical landslide records feed the same model.</p>
       </div>
       <div class="feature-card reveal">
-        <div class="feature-icon">❓</div>
-        <h3>Smart clarifying questions</h3>
-        <p>Sentry.ai asks only when it needs to, so the conversation stays short and useful.</p>
+        <div class="feature-icon">🧠</div>
+        <h3>AI/ML risk scoring</h3>
+        <p>Models trained on terrain and weather history flag high-risk zones and estimate the likelihood of a landslide event.</p>
       </div>
       <div class="feature-card reveal">
-        <div class="feature-icon">🧩</div>
-        <h3>Structured output</h3>
-        <p>Concept, solution approach, features, workflow, technical architecture, and implementation plan — every time.</p>
+        <div class="feature-icon">🚨</div>
+        <h3>Real-time alerts</h3>
+        <p>District administrations, disaster management authorities and local communities are notified as risk changes, not after the fact.</p>
       </div>
       <div class="feature-card reveal">
-        <div class="feature-icon">🔁</div>
-        <h3>Iterative refinement</h3>
-        <p>Not happy with a section? Say so in chat and Sentry.ai reshapes it — no starting over.</p>
+        <div class="feature-icon">🗺️</div>
+        <h3>GIS visualisation</h3>
+        <p>Vulnerable roads, villages and infrastructure are plotted on a live map, so risk is something you can see, not just read.</p>
       </div>
       <div class="feature-card reveal">
-        <div class="feature-icon">⚡</div>
-        <h3>Built for speed</h3>
-        <p>Go from a one-line idea to a presentable project outline in a single sitting.</p>
+        <div class="feature-icon">📸</div>
+        <h3>Citizen &amp; field uploads</h3>
+        <p>Anyone on the ground can upload geo-tagged photos or videos of cracks, slope movement or blocked roads in seconds.</p>
       </div>
       <div class="feature-card reveal">
-        <div class="feature-icon">🗂️</div>
-        <h3>Ready-to-use output</h3>
-        <p>Your structured project is organized so it can move straight into planning or a pitch.</p>
+        <div class="feature-icon">🌐</div>
+        <h3>Multilingual, low-network ready</h3>
+        <p>Notifications go out in local languages, and the field app keeps working — and syncs later — where connectivity drops.</p>
       </div>
     </div>
+  </div>
+</section>
+
+<section id="dashboard">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="section-eyebrow">Operations dashboard</span>
+      <h2>What a district administrator sees</h2>
+      <p>One screen for risk severity, road connectivity, weather-linked forecasts and where the response effort should go first.</p>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-card reveal">
+        <div class="sk">Risk severity</div>
+        <div class="sv">3 zones</div>
+        <span class="status-pill danger">Critical — act now</span>
+      </div>
+      <div class="stat-card reveal">
+        <div class="sk">Road connectivity</div>
+        <div class="sv">2 blocked</div>
+        <span class="status-pill warn">NH-306, SH-14</span>
+      </div>
+      <div class="stat-card reveal">
+        <div class="sk">72h forecast</div>
+        <div class="sv">+64 mm</div>
+        <span class="status-pill warn">Heavy spell expected</span>
+      </div>
+      <div class="stat-card reveal">
+        <div class="sk">Response queue</div>
+        <div class="sv">Sector 07</div>
+        <span class="status-pill danger">Top priority</span>
+      </div>
+    </div>
+    <p class="dash-note">Updated continuously as new sensor, satellite and field-report data comes in.</p>
   </div>
 </section>
 
@@ -464,21 +544,25 @@
   <div class="wrap">
     <div class="section-head">
       <span class="section-eyebrow">Technology</span>
-      <h2>An AI-powered conversational engine</h2>
+      <h2>Built to run where the network doesn't always reach</h2>
       <p>Sentry.ai is under active development. At a high level, it's structured in layers:</p>
     </div>
     <div class="stack">
       <div class="stack-layer reveal">
-        <div><div class="lname">Conversational layer</div><div class="ldesc">Understands your idea and manages the dialogue</div></div>
-        <span class="lbadge">interface</span>
+        <div><div class="lname">Sensing layer</div><div class="ldesc">Ingests IMD weather APIs, satellite feeds, ground sensors and citizen geo-tagged uploads</div></div>
+        <span class="lbadge">intake</span>
       </div>
       <div class="stack-layer reveal">
-        <div><div class="lname">Reasoning layer</div><div class="ldesc">Decides what's missing and what to ask next</div></div>
+        <div><div class="lname">Prediction engine</div><div class="ldesc">Scores every monitored zone and generates risk heatmaps and forecasts</div></div>
         <span class="lbadge">core</span>
       </div>
       <div class="stack-layer reveal">
-        <div><div class="lname">Structuring engine</div><div class="ldesc">Assembles the conversation into a complete project</div></div>
-        <span class="lbadge">output</span>
+        <div><div class="lname">Alerting &amp; field layer</div><div class="ldesc">Multilingual SMS/app alerts, plus an offline-capable field-reporting app</div></div>
+        <span class="lbadge">interface</span>
+      </div>
+      <div class="stack-layer reveal">
+        <div><div class="lname">Platform</div><div class="ldesc">Cloud-based core with local caching, so it keeps working through connectivity drops</div></div>
+        <span class="lbadge">cloud</span>
       </div>
     </div>
     <p class="stack-note">Specific tools and frameworks are still being finalized as the build progresses.</p>
@@ -489,8 +573,8 @@
   <div class="wrap">
     <div class="impact reveal">
       <span class="section-eyebrow" style="justify-content:center;display:flex;">Impact</span>
-      <h2>Less time structuring. More time building.</h2>
-      <p>Sentry.ai is built on a simple bet: the gap between having an idea and having a project shouldn't take tools, templates, or hours to close. It should take a conversation.</p>
+      <h2>Reach every slope before the rain does</h2>
+      <p>Sentry.ai is built on a simple bet: disaster preparedness in the North Eastern Region shouldn't depend on how fast word travels after a slope has already failed. It should depend on how early the signal was caught — for less loss of life, less infrastructure damage, and more climate-resilient governance.</p>
     </div>
   </div>
 </section>
@@ -500,11 +584,11 @@
     <div class="section-head">
       <span class="section-eyebrow">Live product</span>
       <h2>The live demo is coming soon</h2>
-      <p>Sentry.ai isn't public yet. Leave your email and you'll be the first to know when you can try it.</p>
+      <p>Sentry.ai isn't public yet. Leave your email and you'll be the first to know when the dashboard and field app are ready to try.</p>
     </div>
     <form class="waitlist-form" id="waitlistForm">
-      <input type="email" id="waitlistEmail" placeholder="you@example.com" required aria-label="Email address">
-      <button type="submit" class="btn-primary">Notify me</button>
+      <input type="email" id="waitlistEmail" name="email" placeholder="you@example.com" required aria-label="Email address">
+      <button type="submit" class="btn-primary" id="waitlistBtn">Notify me</button>
     </form>
     <p class="waitlist-msg" id="waitlistMsg"></p>
     <div class="status-badge"><span class="pulse-dot"></span>In active development for SIH</div>
@@ -519,9 +603,9 @@
 </footer>
 
 <script>
-  // Hero typing + structuring animation
+  // Hero typing + risk-assessment animation
   (function(){
-    const text = "I want to help farmers detect crop disease early using AI.";
+    const text = "Heavy rain in Sector 07 — soil moisture climbing fast.";
     const typedEl = document.getElementById('typedText');
     const thinking = document.getElementById('thinkingIndicator');
     const blocks = document.querySelectorAll('#blocksGrid .block');
@@ -569,13 +653,40 @@
     els.forEach(e=>io.observe(e));
   })();
 
-  // Waitlist form (client-side only — no backend connected yet)
-  document.getElementById('waitlistForm').addEventListener('submit', function(e){
+  // Waitlist form — submits to Formspree (https://formspree.io)
+  // 1. Create a free account at formspree.io, create a form, copy its endpoint.
+  // 2. Replace FORMSPREE_ENDPOINT below with that URL, e.g.
+  //    "https://formspree.io/f/abcdwxyz"
+  const FORMSPREE_ENDPOINT = "https://formspree.io/f/xoeqvozg";
+
+  document.getElementById('waitlistForm').addEventListener('submit', async function(e){
     e.preventDefault();
+    const form = this;
+    const btn = document.getElementById('waitlistBtn');
     const email = document.getElementById('waitlistEmail').value;
     const msg = document.getElementById('waitlistMsg');
-    msg.textContent = "Thanks — we'll email " + email + " when Sentry.ai is live.";
-    this.reset();
+
+    btn.disabled = true;
+    btn.textContent = "Sending…";
+
+    try {
+      const res = await fetch(FORMSPREE_ENDPOINT, {
+        method: "POST",
+        headers: { "Accept": "application/json" },
+        body: new FormData(form)
+      });
+      if (res.ok) {
+        msg.textContent = "Thanks — we'll email " + email + " when Sentry.ai is live.";
+        form.reset();
+      } else {
+        msg.textContent = "Something went wrong — please try again.";
+      }
+    } catch (err) {
+      msg.textContent = "Network error — please try again.";
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Notify me";
+    }
   });
 </script>
 
