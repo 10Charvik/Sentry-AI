@@ -8,6 +8,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!-- Preconnect to the Sentry.ai API so the live dashboard/hero fetches below don't
+     pay full DNS+TCP+TLS setup cost on their first request. Keep this in sync with
+     API_BASE near the bottom of the file if you point it at a deployed backend. -->
+<link rel="preconnect" href="http://localhost:8000">
 <style>
   :root{
     --bg:#0E1116;
@@ -397,12 +401,12 @@
       <div class="chat-bubble"><span id="typedText"></span><span class="cursor"></span></div>
       <div class="thinking" id="thinkingIndicator"><span class="tdot"></span><span class="tdot"></span><span class="tdot"></span><span class="mono">assessing risk</span></div>
       <div class="blocks" id="blocksGrid">
-        <div class="block"><span class="btag warn">Risk severity</span><span class="btitle">High — Sector 07</span></div>
-        <div class="block"><span class="btag">Rainfall / 24h</span><span class="btitle">86 mm, rising</span></div>
-        <div class="block"><span class="btag warn">Soil moisture</span><span class="btitle">91% saturation</span></div>
-        <div class="block"><span class="btag safe">Road NH-306</span><span class="btitle">Open, monitored</span></div>
-        <div class="block"><span class="btag">72h forecast</span><span class="btitle">+64 mm expected</span></div>
-        <div class="block"><span class="btag warn">Alert dispatched</span><span class="btitle">District EOC notified</span></div>
+        <div class="block"><span class="btag warn" id="heroRiskTag">Risk severity</span><span class="btitle" id="heroRisk">High — Sector 07</span></div>
+        <div class="block"><span class="btag">Rainfall / 24h</span><span class="btitle" id="heroRainfall">86 mm, rising</span></div>
+        <div class="block"><span class="btag warn">Soil moisture</span><span class="btitle" id="heroSoil">91% saturation</span></div>
+        <div class="block"><span class="btag safe" id="heroRoadTag">Road NH-306</span><span class="btitle" id="heroRoad">Open, monitored</span></div>
+        <div class="block"><span class="btag">72h forecast</span><span class="btitle" id="heroForecast">+64 mm expected</span></div>
+        <div class="block"><span class="btag warn" id="heroAlertTag">Alert dispatched</span><span class="btitle" id="heroAlert">District EOC notified</span></div>
       </div>
     </div>
   </div>
@@ -517,26 +521,26 @@
     <div class="stat-grid">
       <div class="stat-card reveal">
         <div class="sk">Risk severity</div>
-        <div class="sv">3 zones</div>
-        <span class="status-pill danger">Critical — act now</span>
+        <div class="sv" id="statRiskZones">3 zones</div>
+        <span class="status-pill danger" id="statRiskPill">Critical — act now</span>
       </div>
       <div class="stat-card reveal">
         <div class="sk">Road connectivity</div>
-        <div class="sv">2 blocked</div>
-        <span class="status-pill warn">NH-306, SH-14</span>
+        <div class="sv" id="statRoadsBlocked">2 blocked</div>
+        <span class="status-pill warn" id="statRoadsPill">NH-306, SH-14</span>
       </div>
       <div class="stat-card reveal">
         <div class="sk">72h forecast</div>
-        <div class="sv">+64 mm</div>
-        <span class="status-pill warn">Heavy spell expected</span>
+        <div class="sv" id="statForecast">+64 mm</div>
+        <span class="status-pill warn" id="statForecastPill">Heavy spell expected</span>
       </div>
       <div class="stat-card reveal">
         <div class="sk">Response queue</div>
-        <div class="sv">Sector 07</div>
-        <span class="status-pill danger">Top priority</span>
+        <div class="sv" id="statQueue">Sector 07</div>
+        <span class="status-pill danger" id="statQueuePill">Top priority</span>
       </div>
     </div>
-    <p class="dash-note">Updated continuously as new sensor, satellite and field-report data comes in.</p>
+    <p class="dash-note" id="dashNote">Updated continuously as new sensor, satellite and field-report data comes in.</p>
   </div>
 </section>
 
@@ -652,6 +656,169 @@
     }, {threshold:0.15});
     els.forEach(e=>io.observe(e));
   })();
+
+  // ---------- Live backend connection ----------
+  // Points at the FastAPI scaffold (sentry-backend). Change this — and the
+  // matching <link rel="preconnect"> in <head> — if you deploy the API
+  // somewhere other than localhost.
+  const API_BASE = "http://localhost:8000";
+  const SECTOR_NAME = "Sector 07"; // matches app/seed.py's ZONE_SEED; resolved by name, not a hardcoded id
+
+  // Every fetch goes through here: it times out instead of hanging if the
+  // backend is up but unresponsive, and returns null on any failure — CORS,
+  // network, non-2xx, bad JSON — instead of throwing, so one field failing
+  // to load never blocks the rest of the page from getting live data.
+  async function fetchJSON(url, timeoutMs = 6000) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch(url, { signal: controller.signal });
+      if (!res.ok) return null;
+      return await res.json();
+    } catch (err) {
+      return null; // backend not reachable — caller keeps the static demo value
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  // Formats a number, or returns null for missing/invalid values (e.g. the
+  // nullable soil_moisture_pct on IMD-sourced readings) so callers can skip
+  // the DOM update and keep the static demo text instead of writing "NaN%".
+  function fmt(n, digits = 0) {
+    return typeof n === "number" && !Number.isNaN(n) ? n.toFixed(digits) : null;
+  }
+
+  async function fetchDashboardSummary() {
+    const data = await fetchJSON(`${API_BASE}/dashboard/summary`);
+    if (!data) return;
+
+    const sev = data.risk_severity ?? {};
+    const critical = sev.high ?? 0;
+    const watch = sev.watch ?? 0;
+    document.getElementById('statRiskZones').textContent = `${critical + watch} zones`;
+    document.getElementById('statRiskPill').textContent =
+      critical > 0 ? 'Critical — act now' : (watch > 0 ? 'Watch — monitor closely' : 'All zones safe');
+    document.getElementById('statRiskPill').className =
+      'status-pill ' + (critical > 0 ? 'danger' : watch > 0 ? 'warn' : 'safe');
+
+    const roads = data.roads ?? {};
+    const blocked = roads.blocked ?? 0;
+    document.getElementById('statRoadsBlocked').textContent = `${blocked} blocked`;
+    document.getElementById('statRoadsPill').textContent =
+      blocked > 0 ? `${blocked} route(s) down` : 'All routes open';
+    document.getElementById('statRoadsPill').className =
+      'status-pill ' + (blocked > 0 ? 'warn' : 'safe');
+
+    const forecastMm = fmt(data.max_forecast_mm_72h);
+    if (forecastMm !== null) {
+      document.getElementById('statForecast').textContent = `+${forecastMm} mm`;
+      document.getElementById('statForecastPill').textContent =
+        data.max_forecast_mm_72h > 50 ? 'Heavy spell expected' : 'Moderate rain expected';
+    }
+
+    if (data.response_queue && data.response_queue.length) {
+      const top = data.response_queue[0];
+      document.getElementById('statQueue').textContent = top.name;
+      document.getElementById('statQueuePill').textContent =
+        top.risk_severity === 'high' ? 'Top priority' : 'Monitor';
+      document.getElementById('statQueuePill').className =
+        'status-pill ' + (top.risk_severity === 'high' ? 'danger' : 'warn');
+    }
+
+    if (data.generated_at) {
+      document.getElementById('dashNote').textContent =
+        `Live from Sentry.ai API — generated ${new Date(data.generated_at).toLocaleTimeString()}`;
+    }
+  }
+
+  // Looks up the demo zone by name instead of assuming a fixed database id —
+  // the id in app/seed.py depends on insert order and isn't guaranteed to
+  // stay 7 across reseeds. Falls back to the highest-risk zone if the named
+  // one isn't found, so the hero panel still shows something meaningful.
+  async function resolveHeroZone() {
+    const zones = await fetchJSON(`${API_BASE}/zones`);
+    const features = zones?.features;
+    if (!features || !features.length) return null;
+    return (
+      features.find(f => f.properties.name === SECTOR_NAME) ??
+      [...features].sort((a, b) => b.properties.risk_score - a.properties.risk_score)[0]
+    );
+  }
+
+  const SEVERITY_TAG_CLASS = { high: 'warn', watch: 'warn', safe: 'safe' };
+  const ROAD_TAG_CLASS = { blocked: 'warn', monitoring: 'warn', open: 'safe' };
+  const ROAD_STATUS_LABEL = { open: 'Open, clear', monitoring: 'Open, monitored', blocked: 'Blocked' };
+
+  async function fetchHeroSnapshot() {
+    const zoneFeature = await resolveHeroZone();
+    if (!zoneFeature) return;
+
+    const props = zoneFeature.properties;
+    const zoneId = props.id;
+    const severity = props.risk_severity;
+
+    document.getElementById('heroRisk').textContent =
+      `${severity.charAt(0).toUpperCase() + severity.slice(1)} — ${props.name}`;
+    const riskTag = document.getElementById('heroRiskTag');
+    if (riskTag) riskTag.className = 'btag ' + (SEVERITY_TAG_CLASS[severity] ?? 'warn');
+
+    // Fetched together — none of these depend on each other, so there's no
+    // reason to wait for one before starting the next.
+    const [sensor, forecast, roads] = await Promise.all([
+      fetchJSON(`${API_BASE}/sensors/${zoneId}/latest`),
+      fetchJSON(`${API_BASE}/sensors/${zoneId}/forecast`),
+      fetchJSON(`${API_BASE}/roads`),
+    ]);
+
+    if (sensor) {
+      const rainfall = fmt(sensor.rainfall_mm_24h);
+      if (rainfall !== null) document.getElementById('heroRainfall').textContent = `${rainfall} mm, rising`;
+
+      // soil_moisture_pct is nullable on the backend — IMD-sourced readings
+      // don't carry it (IMD has no soil sensor data). Skip the update rather
+      // than render "NaN%" when it's null.
+      const soil = fmt(sensor.soil_moisture_pct);
+      if (soil !== null) document.getElementById('heroSoil').textContent = `${soil}% saturation`;
+    }
+
+    if (forecast) {
+      const mm = fmt(forecast.forecast_mm_72h);
+      if (mm !== null) document.getElementById('heroForecast').textContent = `+${mm} mm expected`;
+    }
+
+    // The road block used to be static markup with no live source at all —
+    // wire it to the actual road segment(s) in this zone.
+    const zoneRoads = roads?.features?.filter(r => r.properties.zone_id === zoneId);
+    if (zoneRoads && zoneRoads.length) {
+      // Prefer the most severe status if the zone has more than one road.
+      const severityOrder = { blocked: 2, monitoring: 1, open: 0 };
+      const worst = zoneRoads.reduce((a, b) =>
+        severityOrder[b.properties.status] > severityOrder[a.properties.status] ? b : a
+      );
+      const status = worst.properties.status;
+      document.getElementById('heroRoad').textContent = ROAD_STATUS_LABEL[status] ?? status;
+      const roadTag = document.getElementById('heroRoadTag');
+      if (roadTag) {
+        roadTag.textContent = `Road ${worst.properties.name}`;
+        roadTag.className = 'btag ' + (ROAD_TAG_CLASS[status] ?? 'safe');
+      }
+    }
+
+    // The backend has no alert-dispatch endpoint yet (see the README's "Next
+    // steps" — SMS/push alerting is still on the roadmap), so this is a
+    // client-side label derived from risk_severity, not a real dispatch
+    // record. Replace with a real value once /alerts (or similar) exists.
+    const alertLabel = severity === 'high' ? 'District EOC notified'
+      : severity === 'watch' ? 'Field team monitoring'
+      : 'No alert needed';
+    document.getElementById('heroAlert').textContent = alertLabel;
+    const alertTag = document.getElementById('heroAlertTag');
+    if (alertTag) alertTag.className = 'btag ' + (SEVERITY_TAG_CLASS[severity] ?? 'warn');
+  }
+
+  fetchDashboardSummary();
+  fetchHeroSnapshot();
 
   // Waitlist form — submits to Formspree (https://formspree.io)
   // 1. Create a free account at formspree.io, create a form, copy its endpoint.
